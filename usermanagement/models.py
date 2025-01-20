@@ -1,4 +1,3 @@
-
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
 
@@ -7,7 +6,7 @@ class User(models.Model):
     password = models.CharField(max_length=255)
     name = models.TextField()
     country = models.IntegerField()
-    max_credits = models.DecimalField(max_digits=10, decimal_places=2)
+    max_credits = models.DecimalField(max_digits=10, decimal_places=2, default=100000)
     is_active = models.BooleanField(default=True)
 
     def set_password(self, raw_password):

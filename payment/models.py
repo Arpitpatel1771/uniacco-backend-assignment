@@ -9,21 +9,7 @@ class RepaymentPlan(models.Model):
     repayment_period = models.IntegerField()  # in months
 
     penalty_daily_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    penalty_grace_period = models.IntegerField()  # in days
-
-
-"""
-payment_type of user
-amount spent by user
-credits remaining of user
-
-transactions made by user
-active repaymentPlans of user, for amounts
-
-due_date of the emi
-
-
-"""
+    penalty_grace_period = models.IntegerField(default=0)  # in days
 
 
 class UserPayment(models.Model):
@@ -32,6 +18,7 @@ class UserPayment(models.Model):
     payment_date = models.DateTimeField(auto_now_add=True)
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    interest_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     state = models.IntegerField()  # 1: pending, 2: paid
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -40,7 +27,7 @@ class UserPayment(models.Model):
     repayment_plan = models.ForeignKey(
         to=RepaymentPlan, on_delete=models.CASCADE, null=True
     )
-    emi_day = models.IntegerField(null=True) # out of 31
+    emi_day = models.IntegerField(null=True)  # out of 31
 
     def update_paid_amount(self):
         self.paid_amount = UserTransaction.objects.filter(user_payment=self).aggregate(
@@ -50,7 +37,12 @@ class UserPayment(models.Model):
 
     def save(self, *args, **kwargs):
         if self.amount:
-            self.balance = self.amount + self.penalty_amount - self.paid_amount
+            self.balance = (
+                self.amount
+                + self.interest_amount
+                + self.penalty_amount
+                - self.paid_amount
+            )
             if self.balance > 0:
                 self.state = 1
             else:
